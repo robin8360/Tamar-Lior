@@ -1,19 +1,57 @@
+
 def do_turn(pw):
-	if len(pw.my_fleets()) >= 1:
-		return
-	
 	if len(pw.my_planets()) == 0:
 		return
 
-	if len(pw.neutral_planets()) >= 1:
-		dest = pw.neutral_planets()[0]
+	n_planets_attacked = []
+	e_planets_attacked = []
 
 	if len(pw.neutral_planets()) >= 1:
-		dest = pw.enemy_planets()[0]
+			dest, source = get_neutral_planet(pw, n_planets_attacked)
+			n_planets_attacked.append(dest)
+			num_ships = source.num_ships() / 2 
+			pw.debug('Neutral: Num Ships: ' + str(num_ships))
+			pw.issue_order(source, dest, num_ships)
 
+	if len(pw.enemy_planets()) >= 1:
+		dest, source = get_enemy_planet(pw)
+		num_ships = source.num_ships() / 2 
+		pw.debug('Enemy: Num Ships: ' + str(num_ships))
+		pw.issue_order(source, dest, num_ships)
+
+
+
+def get_neutral_planet(pw, planets_attacked):
+	dest = pw.neutral_planets()[0]
 	source = pw.my_planets()[0]
-	num_ships = source.num_ships() / 2
+	index = 0
 
-	pw.debug('Num Ships: ' + str(num_ships))
+	for my_planet in pw.my_planets():
+		for neutral_planet in pw.neutral_planets():
+				if neutral_planet not in planets_attacked:
+					if 0 == index:
+						dest = neutral_planet
+						source = my_planet
+						index += 1
+					elif neutral_planet.num_ships() < my_planet.num_ships() -5:
+						if pw.distance(my_planet, neutral_planet) <= pw.distance(my_planet, dest):
+							dest = neutral_planet
+							source = my_planet
+	return dest, source
 
-	pw.issue_order(source, dest, num_ships)
+def get_enemy_planet(pw):
+	dest = pw.enemy_planets()[0]
+	source = pw.my_planets()[0]
+	index = 0
+
+	for my_planet in pw.my_planets():
+		for enemy_planet in pw.enemy_planets():
+				if 0 == index:
+					dest = enemy_planet
+					source = my_planet
+					index += 1
+				elif enemy_planet.num_ships() < my_planet.num_ships() - 5 :
+					if pw.distance(my_planet, enemy_planet) <= pw.distance(my_planet, dest):
+						dest = enemy_planet
+						source = my_planet
+	return dest, source
